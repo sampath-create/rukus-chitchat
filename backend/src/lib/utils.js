@@ -10,6 +10,5 @@ export const generateToken = (userId,res)=>{
         sameSite:true, // prevents CSRF attacks
         secure : ENV.NODE_ENV === "Development" ? false : true,
      });
-
      return token;
 };
