@@ -1,7 +1,8 @@
 import React from 'react'
+import { useAuthStore } from '../store/useAuthStore'
 
 function ChatPage() {
-    const {authUser,isLoding,login}=useAuthStore();
+    const {authUser,isLoading,login}=useAuthStore();
 
   return (
     <div className="relative z-10">
