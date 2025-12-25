@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useAuthStore } from '../store/useAuthStore';
 import { Link } from 'react-router-dom';
-import {ReactComponent as LoaderIcon} from "../assets/loader.svg";
+import PageLoader from '../components/pageloader.jsx';
 function SignUpPage() {
   
 const [formData,setFormData]=useState({fullName:"",email:"",password:""});
