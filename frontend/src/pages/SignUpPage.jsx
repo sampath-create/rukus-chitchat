@@ -2,13 +2,14 @@ import React, { useState } from 'react'
 import { useAuthStore } from '../store/useAuthStore';
 import { Link } from 'react-router-dom';
 import PageLoader from '../components/pageloader.jsx';
+import { LoaderIcon } from 'lucide-react';
 function SignUpPage() {
   
 const [formData,setFormData]=useState({fullName:"",email:"",password:""});
-const {signUp,isSigingnUp}=useAuthStore();
+const {signup,isSigningUp}=useAuthStore();
 const handleSubmit=(e)=>{
   e.preventDefault(); 
-  signUp(formData);
+  signup({...formData, fullname: formData.fullName});
 };
 
   return  <div className="w-full flex items-center justify-center p-4 bg-[#fffaf0]">
@@ -22,7 +23,9 @@ const handleSubmit=(e)=>{
           value={formData.fullName}
           onChange={(e)=>setFormData({...formData,fullName:e.target.value})}
           className="input bg-white"
-          placeholder="మీ నామధేయం "></input>
+          placeholder="మీ నామధేయం "
+          required
+          />
         </div>
         <div>
           <label className="block mb-1 font-medium">Email</label> 
@@ -42,12 +45,12 @@ const handleSubmit=(e)=>{
           className="input bg-white"
           placeholder="మీ తాళం" />
         </div>
-        <button type="submit" className="w-full bg-[#8b7355] text-[#f5e6d3] py-2 px-4 rounded-lg border-2 border-[#8b7355] text-center font-semibold hover:bg-[#a0826d] transition-colors" disabled={isSigingnUp}>
-          {isSigingnUp ? (<LoaderIcon className="w-full h-5 animate-spin text-center"/>) : ("Create Account")}
+        <button type="submit" className="w-full bg-[#8b7355] text-[#f5e6d3] py-2 px-4 rounded-lg border-2 border-[#8b7355] text-center font-semibold hover:bg-[#a0826d] transition-colors" disabled={isSigningUp}>
+          {isSigningUp ? (<LoaderIcon className="w-full h-5 animate-spin text-center"/>) : ("Create Account")}
         </button>
       </form>
       <div className="mt-4 text-center">
-        <Link to="login" className="auth-link">
+        <Link to="/login" className="auth-link">
         Already have an account? Log in
         </Link>
 

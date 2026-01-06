@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useAuthStore } from '../store/useAuthStore';
 import { Link } from 'react-router-dom';
 import PageLoader from '../components/pageloader.jsx';
+import { LoaderIcon } from 'lucide-react';
 function LoginPage() {
   const [formData,setFormData]=useState({email:"",password:""});
   const {login,isLoggingIn}=useAuthStore();
