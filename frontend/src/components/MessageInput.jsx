@@ -15,9 +15,9 @@ function MessageInput() {
 
   const handleInputChange=(e)=>{
     e.preventDefault();
-    if (!text.trim(), !imagePreview) return ;
+    if (!text.trim() && !imagePreview) return;
 
-    if (isSoundEnabled) playRandomStrokes;
+    if (isSoundEnabled) playRandomStrokes();
 
     sendMessage({
       text: text.trim(),
@@ -31,7 +31,8 @@ function MessageInput() {
   };
 
   const handleImageChange=(e)=>{
-    const file=e.target.files[0];
+    const file=e.target.files?.[0];
+    if (!file) return;
     if(!file.type.startsWith("image/")) {
       toast.error("Please select a valid image file");
       return;
@@ -75,7 +76,7 @@ function MessageInput() {
           value={text}
           onChange={(e) => {
             setText(e.target.value);
-            isSoundEnabled && playRandomKeyStrokeSound();
+            if (isSoundEnabled) playRandomStrokes();
           }}
           className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg py-2 px-4"
           placeholder="Type your message..."

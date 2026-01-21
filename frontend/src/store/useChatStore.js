@@ -1,6 +1,7 @@
 import {create} from "zustand";
 import {axiosInstance} from "../lib/axios";
 import toast from "react-hot-toast";
+import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get)=>( 
     {
@@ -106,6 +107,11 @@ export const useChatStore = create((set, get)=>(
         const {selectedUser,messages}=get();
         const { authUser } = useAuthStore.getState();
 
+        if (!selectedUser?._id) {
+            toast.error("Select a user to chat first");
+            return;
+        }
+
         const tempId = `temp-${Date.now()}`;
 
         const optimisticMessage = {
@@ -121,12 +127,21 @@ export const useChatStore = create((set, get)=>(
     set({ messages: [...messages, optimisticMessage] });
         try{
             const res= await axiosInstance.post(`/messages/send/${selectedUser._id}`,messageData);
-            set({messages:messages.concat(res.data)});
-            getMessagesByUserId (selectedUser._id);
+            const savedMessage = res.data;
+
+            set((state) => {
+                const hasTemp = state.messages.some((m) => m._id === tempId);
+                if (!hasTemp) return { messages: state.messages.concat(savedMessage) };
+
+                return {
+                    messages: state.messages.map((m) => (m._id === tempId ? savedMessage : m)),
+                };
+            });
         }
         catch(error){
-        set({ messages: messages });
-        toast.error(error.response?.data?.message || "Something went wrong");        }
+            set({ messages });
+            toast.error(error.response?.data?.message || "Something went wrong");
+        }
     },
 
 }
