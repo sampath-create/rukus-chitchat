@@ -1,7 +1,9 @@
 import {create} from 'zustand';
 import {axiosInstance} from '../lib/axios';
 import toast from 'react-hot-toast';
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
+import { io } from "socket.io-client";
+
+const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:8081" : "/";
 export const useAuthStore = create((set,get)=>({
         authUser: null,
         isCheckingAuth: true,
@@ -10,7 +12,7 @@ export const useAuthStore = create((set,get)=>({
         isLoggingOut: false,
         socket: null,
         onlineUsers: [],
-        socket:null,
+
 
     checkAuth: async () =>{
         try{
@@ -97,8 +99,6 @@ export const useAuthStore = create((set,get)=>({
     const socket = io(BASE_URL, {
       withCredentials: true, // this ensures cookies are sent with the connection
     });
-
-    socket.connect();
 
     set({ socket });
 

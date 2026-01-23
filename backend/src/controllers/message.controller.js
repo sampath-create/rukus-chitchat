@@ -1,6 +1,7 @@
 import Message from "../Models/message.js";
 import User from "../Models/User.js";
 import {cloudinary} from "../lib/cloudinary.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const getAllContacts = async (req ,res) => {
     try{
@@ -57,6 +58,10 @@ export const sendMessage=async (req,res)=>{
          });
          await newMessage.save();
          //todo : send real time data through socket.io
+            const receiverSocketId = getReceiverSocketId(receiverId.toString());
+            if (receiverSocketId){
+                io.to(receiverSocketId).emit("newMessage", newMessage);
+         }
          res.status(201).json(newMessage);
     }
     catch(error){
@@ -88,3 +93,56 @@ export const getChatPartners = async (req,res) =>{
     }
 
 }
+
+export const deleteMessage = async (req, res) => {
+    try {
+        const myId = req.user._id;
+        const { messageId } = req.params;
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: "Message not found" });
+        }
+
+        if (message.senderId.toString() !== myId.toString()) {
+            return res.status(403).json({ message: "You can only delete your own messages" });
+        }
+
+        await Message.findByIdAndDelete(messageId);
+
+        return res.status(200).json({ message: "Message deleted", messageId: message._id });
+    } catch (error) {
+        console.error("Error in deleteMessage controller:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+export const editMessage = async (req, res) => {
+    try {
+        const myId = req.user._id;
+        const { messageId } = req.params;
+        const { text } = req.body;
+
+        const nextText = String(text ?? "").trim();
+        if (!nextText) {
+            return res.status(400).json({ message: "Message text is required" });
+        }
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: "Message not found" });
+        }
+
+        if (message.senderId.toString() !== myId.toString()) {
+            return res.status(403).json({ message: "You can only edit your own messages" });
+        }
+
+        message.text = nextText;
+        await message.save();
+
+        return res.status(200).json(message);
+    } catch (error) {
+        console.error("Error in editMessage controller:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};

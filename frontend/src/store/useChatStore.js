@@ -144,6 +144,89 @@ export const useChatStore = create((set, get)=>(
         }
     },
 
+    deleteMessage: async (messageId) => {
+        const { messages } = get();
+
+        if (!messageId || String(messageId).startsWith("temp-")) {
+            return;
+        }
+
+        // optimistic UI update
+        const prevMessages = messages;
+        set({ messages: prevMessages.filter((m) => String(m._id) !== String(messageId)) });
+
+        try {
+            await axiosInstance.delete(`/messages/${messageId}`);
+        } catch (error) {
+            set({ messages: prevMessages });
+            toast.error(error.response?.data?.message || "Failed to delete message");
+        }
+    },
+
+    editMessage: async (messageId, nextText) => {
+        const { messages } = get();
+
+        if (!messageId || String(messageId).startsWith("temp-")) return;
+
+        const text = String(nextText ?? "").trim();
+        if (!text) {
+            toast.error("Message cannot be empty");
+            return;
+        }
+
+        const prevMessages = messages;
+        const optimisticUpdatedAt = new Date().toISOString();
+
+        set({
+            messages: prevMessages.map((m) =>
+                String(m._id) === String(messageId)
+                    ? { ...m, text, updatedAt: optimisticUpdatedAt }
+                    : m
+            ),
+        });
+
+        try {
+            const res = await axiosInstance.patch(`/messages/${messageId}`, { text });
+            const updated = res.data;
+            set((state) => ({
+                messages: state.messages.map((m) => (String(m._id) === String(messageId) ? updated : m)),
+            }));
+        } catch (error) {
+            set({ messages: prevMessages });
+            toast.error(error.response?.data?.message || "Failed to edit message");
+        }
+    },
+
+    subscribeToMessages: () => {
+    const { selectedUser, isSoundEnabled } = get();
+    if (!selectedUser) return;
+
+    const socket = useAuthStore.getState().socket;
+
+        if (!socket) return;
+
+    socket.on("newMessage", (newMessage) => {
+            const isMessageSentFromSelectedUser =
+                String(newMessage?.senderId) === String(selectedUser?._id);
+      if (!isMessageSentFromSelectedUser) return;
+
+      const currentMessages = get().messages;
+      set({ messages: [...currentMessages, newMessage] });
+
+      if (isSoundEnabled) {
+        const notificationSound = new Audio("/sounds/notification.mp3");
+
+        notificationSound.currentTime = 0; // reset to start
+        notificationSound.play().catch((e) => console.log("Audio play failed:", e));
+      }
+    });
+  },
+
+  unsubscribeFromMessages: () => {
+    const socket = useAuthStore.getState().socket;
+        socket?.off("newMessage");
+  },
+
 }
 )
 );
