@@ -1,6 +1,22 @@
 import { MessageCircleIcon } from "lucide-react";
+import { useChatStore } from "../store/useChatStore";
 
 const NoChatHistoryPlaceholder = ({ name }) => {
+  const { sendMessage } = useChatStore();
+
+  const quickReplies = [
+    "yem chestunnavu",
+    "tamaru yela vunnaru",
+    "Tinnava",
+    "oyy rukus",
+  ];
+
+  const handleQuickReply = (text) => {
+    const messageText = String(text || "").trim();
+    if (!messageText) return;
+    sendMessage({ text: messageText, image: null });
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-6">
       <div className="w-16 h-16 bg-[#8b7355]/15 rounded-full flex items-center justify-center mb-5">
@@ -16,18 +32,16 @@ const NoChatHistoryPlaceholder = ({ name }) => {
         <div className="h-px w-32 bg-gradient-to-r from-transparent via-[#d4a574]/40 to-transparent mx-auto"></div>
       </div>
       <div className="flex flex-wrap gap-2 justify-center">
-        <button className="px-4 py-2 text-xs font-medium text-[#4a2c1c] bg-[#8b7355]/15 rounded-full hover:bg-[#8b7355]/25 transition-colors">
-           yem chestunnavu
-        </button>
-        <button className="px-4 py-2 text-xs font-medium text-[#4a2c1c] bg-[#8b7355]/15 rounded-full hover:bg-[#8b7355]/25 transition-colors">
-          tamaru yela vunnaru
-        </button>
-        <button className="px-4 py-2 text-xs font-medium text-[#4a2c1c] bg-[#8b7355]/15 rounded-full hover:bg-[#8b7355]/25 transition-colors">
-          Tinnava
-        </button>
-        <button className="px-4 py-2 text-xs font-medium text-[#4a2c1c] bg-[#8b7355]/15 rounded-full hover:bg-[#8b7355]/25 transition-colors">
-          oyy rukus
-        </button>
+        {quickReplies.map((text) => (
+          <button
+            key={text}
+            type="button"
+            onClick={() => handleQuickReply(text)}
+            className="px-4 py-2 text-xs font-medium text-[#4a2c1c] bg-[#8b7355]/15 rounded-full hover:bg-[#8b7355]/25 transition-colors"
+          >
+            {text}
+          </button>
+        ))}
       </div>
     </div>
   );
