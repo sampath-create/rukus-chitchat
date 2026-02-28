@@ -17,10 +17,29 @@ const PORT = ENV.PORT;
 
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+const allowedOrigins = [
+    ENV.CLIENT_URL?.trim(),
+    "https://rukus-chitchat.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+].filter(Boolean);
+
 app.use(cors({
-    origin : [ENV.CLIENT_URL, "http://localhost:5173", "http://localhost:3000"].filter(Boolean),
+    origin : function (origin, callback) {
+        // allow non-browser requests (e.g. Postman, server-to-server)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error("Not allowed by CORS"));
+    },
     credentials : true,
 }));
+
+// Handle preflight OPTIONS for all routes
+app.options("*", cors());
+
 app.use(cookieParser());
 
 app.use("/api/auth",authRoutes);

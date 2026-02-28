@@ -2,6 +2,8 @@ import aj from "../lib/arcjet.js";
 import { isSpoofedBot } from "@arcjet/inspect";
 
 export const arcjetProtection = async (req,res,next) =>{
+    // Skip arcjet for preflight OPTIONS requests (CORS)
+    if (req.method === "OPTIONS") return next();
     try{
         const decision = await aj.protect(req);
         if (decision.isDenied()) {
