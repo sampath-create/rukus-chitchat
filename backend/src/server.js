@@ -8,7 +8,6 @@ import userRoutes from "./routes/user.route.js";
 import { connectDB } from './lib/db.js';
 import {ENV} from "./lib/env.js"
 import cookieParser from "cookie-parser";
-import cors from "cors"
 import {app, server}from "./lib/socket.js";
 
 const __dirname =path.resolve();
@@ -25,17 +24,22 @@ const allowedOrigins = [
     "http://localhost:3000",
 ].filter(Boolean);
 
-app.use(cors({
-    origin : function (origin, callback) {
-        // allow non-browser requests (e.g. Postman, server-to-server)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        return callback(new Error("Not allowed by CORS"));
-    },
-    credentials : true,
-}));
+// Manual CORS — runs first, guarantees headers on every response including preflight
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+
+    // Respond to preflight immediately
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+    }
+    next();
+});
 
 app.use(cookieParser());
 
