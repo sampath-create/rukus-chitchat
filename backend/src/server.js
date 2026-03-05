@@ -5,6 +5,7 @@ import path from "path";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
+import groupRoutes from "./routes/group.route.js";
 import { connectDB } from './lib/db.js';
 import {ENV} from "./lib/env.js"
 import cookieParser from "cookie-parser";
@@ -46,6 +47,7 @@ app.use(cookieParser());
 app.use("/api/auth",authRoutes);
 app.use("/api/messages",messageRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/groups", groupRoutes);
 
 if(process.env.NODE_ENV == "production"){
     app.use(express.static(path.join(__dirname ,"../frontend/dist")));

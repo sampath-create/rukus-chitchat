@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { CheckIcon, PencilIcon, Trash2Icon, XIcon } from "lucide-react";
+import { CheckIcon, CheckCheckIcon, PencilIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useAuthStore } from '../store/useAuthStore';
 import ChatHeader from './ChatHeader';
 import NoChatHistoryPlaceholder from './NoChatHistoryPlaceholder';
@@ -139,6 +139,11 @@ function ChatContainer() {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
+                    {msg.senderId === authUser._id && (
+                      msg.seen
+                        ? <CheckCheckIcon className="w-3.5 h-3.5 text-blue-600" title="Seen" />
+                        : <CheckIcon className="w-3.5 h-3.5 text-[#4a2c1c]/50" title="Delivered" />
+                    )}
                   </p>
                 </div>
               </div>

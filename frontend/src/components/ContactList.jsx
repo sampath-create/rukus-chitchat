@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useChatStore } from "../store/useChatStore";
+import { useGroupStore } from "../store/useGroupStore";
 import UsersLoadingSkeleton from "./UsersLoadingSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import UserSearch from "./UserSearch";
@@ -17,6 +18,7 @@ function ContactList() {
     setSearchQuery,
     isSearchingUsers,
   } = useChatStore();
+  const { setSelectedGroup } = useGroupStore();
   const { onlineUsers } = useAuthStore();
 
   useEffect(() => {
@@ -55,7 +57,7 @@ function ContactList() {
           <div
             key={contact._id}
             className="bg-[#8b7355]/25 p-4 rounded-lg cursor-pointer hover:bg-[#8b7355]/35 transition-colors"
-            onClick={() => setSelectedUser(contact)}
+            onClick={() => { setSelectedGroup(null); setSelectedUser(contact); }}
           >
             <div className="flex items-center gap-3">
               <div className={`avatar ${onlineUsers?.includes(contact._id) ? "online" : "offline"}`}>

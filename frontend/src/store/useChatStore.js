@@ -97,6 +97,13 @@ export const useChatStore = create((set, get)=>(
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
+
+      // The backend auto-marks received messages as seen when fetching,
+      // but also emit via socket for real-time notification to sender
+      const socket = useAuthStore.getState().socket;
+      if (socket) {
+        socket.emit("markSeen", { senderId: userId });
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
@@ -163,6 +170,28 @@ export const useChatStore = create((set, get)=>(
         }
     },
 
+    deleteChatWithUser: async (partnerId) => {
+        const { chats, selectedUser } = get();
+        const prevChats = chats;
+
+        // Optimistic UI: remove from chat list immediately
+        set({ chats: chats.filter((c) => String(c._id) !== String(partnerId)) });
+
+        // If the deleted chat is currently open, close it
+        if (selectedUser && String(selectedUser._id) === String(partnerId)) {
+            set({ selectedUser: null, messages: [] });
+        }
+
+        try {
+            await axiosInstance.delete(`/messages/chat/${partnerId}`);
+            toast.success("Chat deleted");
+        } catch (error) {
+            // Rollback on failure
+            set({ chats: prevChats });
+            toast.error(error.response?.data?.message || "Failed to delete chat");
+        }
+    },
+
     editMessage: async (messageId, nextText) => {
         const { messages } = get();
 
@@ -213,6 +242,9 @@ export const useChatStore = create((set, get)=>(
       const currentMessages = get().messages;
       set({ messages: [...currentMessages, newMessage] });
 
+      // Auto-mark the incoming message as seen since user has this chat open
+      socket.emit("markSeen", { senderId: selectedUser._id });
+
       if (isSoundEnabled) {
         const notificationSound = new Audio("/sounds/notification.mp3");
 
@@ -220,11 +252,23 @@ export const useChatStore = create((set, get)=>(
         notificationSound.play().catch((e) => console.log("Audio play failed:", e));
       }
     });
+
+    // Listen for "messagesSeen" — update seen status for messages in real-time
+    socket.on("messagesSeen", ({ messageIds }) => {
+      if (!messageIds || messageIds.length === 0) return;
+      const idSet = new Set(messageIds.map(String));
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          idSet.has(String(m._id)) ? { ...m, seen: true, seenAt: new Date().toISOString() } : m
+        ),
+      }));
+    });
   },
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
         socket?.off("newMessage");
+        socket?.off("messagesSeen");
   },
 
 }

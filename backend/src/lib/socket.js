@@ -3,6 +3,7 @@ import http from "http";
 import express from "express";
 import { ENV } from "./env.js";
 import { socketAuthMiddleware } from "../middleware/socket.auth.middleware.js";
+import Message from "../Models/message.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -45,6 +46,46 @@ io.on("connection", (socket) => {
 
   // io.emit() is used to send events to all connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  // Handle "markSeen" — receiver tells us they've seen messages from a sender
+  socket.on("markSeen", async ({ senderId }) => {
+    try {
+      if (!senderId) return;
+      const receiverId = userId; // the socket owner is the receiver
+      const now = new Date();
+
+      const result = await Message.updateMany(
+        { senderId, receiverId, seen: false },
+        { $set: { seen: true, seenAt: now, expiresAt: new Date(now.getTime() + 60 * 1000) } }
+      );
+
+      if (result.modifiedCount > 0) {
+        // Fetch updated message IDs
+        const seenMessages = await Message.find(
+          { senderId, receiverId, seen: true, seenAt: now },
+          { _id: 1 }
+        );
+        const messageIds = seenMessages.map(m => m._id.toString());
+
+        // Notify the sender that their messages have been seen
+        const senderSocketId = userSocketMap[senderId];
+        if (senderSocketId) {
+          io.to(senderSocketId).emit("messagesSeen", {
+            by: receiverId,
+            messageIds,
+          });
+        }
+
+        // Also notify the receiver so their UI updates the seen status
+        socket.emit("messagesSeen", {
+          by: receiverId,
+          messageIds,
+        });
+      }
+    } catch (error) {
+      console.error("Error in markSeen socket handler:", error);
+    }
+  });
 
   // with socket.on we listen for events from clients
   socket.on("disconnect", () => {

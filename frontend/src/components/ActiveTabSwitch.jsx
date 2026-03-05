@@ -19,6 +19,13 @@ function ActiveTabSwitch() {
       </button>
       <button
         type="button"
+        onClick={() => setActiveTab('groups')}
+        className={`${baseTab} ${activeTab === 'groups' ? active : inactive}`}
+      >
+        groups
+      </button>
+      <button
+        type="button"
         onClick={() => setActiveTab('contacts')}
         className={`${baseTab} ${activeTab === 'contacts' ? active : inactive}`}
       >

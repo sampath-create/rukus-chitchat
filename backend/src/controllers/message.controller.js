@@ -24,6 +24,36 @@ export const getMessagesByUserId=async (req,res)=>{
                 {senderId :usertochat , receiverId : myId}
             ]
         })
+
+        // Auto-mark all unseen messages FROM the other user as "seen"
+        const unseenIds = messages
+            .filter(m => m.receiverId.toString() === myId.toString() && !m.seen)
+            .map(m => m._id);
+
+        if (unseenIds.length > 0) {
+            const now = new Date();
+            await Message.updateMany(
+                { _id: { $in: unseenIds } },
+                { $set: { seen: true, seenAt: now, expiresAt: new Date(now.getTime() + 60 * 1000) } }
+            );
+            // Update the in-memory messages before sending response
+            messages.forEach(m => {
+                if (unseenIds.some(id => id.toString() === m._id.toString())) {
+                    m.seen = true;
+                    m.seenAt = now;
+                    m.expiresAt = new Date(now.getTime() + 60 * 1000);
+                }
+            });
+            // Notify the sender in real-time that their messages have been seen
+            const senderSocketId = getReceiverSocketId(usertochat.toString());
+            if (senderSocketId) {
+                io.to(senderSocketId).emit("messagesSeen", {
+                    by: myId.toString(),
+                    messageIds: unseenIds.map(id => id.toString()),
+                });
+            }
+        }
+
         res.status(200).json(messages);
     }
     catch(error){
@@ -54,7 +84,8 @@ export const sendMessage=async (req,res)=>{
             senderId,
             receiverId,
             text,
-            image : imageUrl
+            image : imageUrl,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // auto-delete after 24h if unseen
          });
          await newMessage.save();
          //todo : send real time data through socket.io
@@ -143,6 +174,66 @@ export const editMessage = async (req, res) => {
         return res.status(200).json(message);
     } catch (error) {
         console.error("Error in editMessage controller:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// Delete the entire chat (all messages) between the logged-in user and another user
+export const deleteChatWithUser = async (req, res) => {
+    try {
+        const myId = req.user._id;
+        const { id: partnerId } = req.params;
+
+        const result = await Message.deleteMany({
+            $or: [
+                { senderId: myId, receiverId: partnerId },
+                { senderId: partnerId, receiverId: myId },
+            ],
+        });
+
+        return res.status(200).json({
+            message: "Chat deleted",
+            deletedCount: result.deletedCount,
+            partnerId,
+        });
+    } catch (error) {
+        console.error("Error in deleteChatWithUser controller:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// Mark all unseen messages from a specific sender as seen
+// This is also called via socket, but having an HTTP endpoint is useful as a fallback
+export const markMessagesSeen = async (req, res) => {
+    try {
+        const myId = req.user._id;
+        const { id: senderId } = req.params;
+
+        const now = new Date();
+        const result = await Message.updateMany(
+            { senderId, receiverId: myId, seen: false },
+            { $set: { seen: true, seenAt: now, expiresAt: new Date(now.getTime() + 60 * 1000) } }
+        );
+
+        // Notify the sender in real-time
+        if (result.modifiedCount > 0) {
+            const senderSocketId = getReceiverSocketId(senderId.toString());
+            if (senderSocketId) {
+                // Fetch the ids of the updated messages to send to the sender
+                const seenMessages = await Message.find(
+                    { senderId, receiverId: myId, seen: true, seenAt: now },
+                    { _id: 1 }
+                );
+                io.to(senderSocketId).emit("messagesSeen", {
+                    by: myId.toString(),
+                    messageIds: seenMessages.map(m => m._id.toString()),
+                });
+            }
+        }
+
+        return res.status(200).json({ modifiedCount: result.modifiedCount });
+    } catch (error) {
+        console.error("Error in markMessagesSeen controller:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };

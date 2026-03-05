@@ -20,9 +20,27 @@ const messageSchema = new mongoose.Schema(
         image:{
             type:String,
         },
-
+        seen: {
+            type: Boolean,
+            default: false,
+        },
+        seenAt: {
+            type: Date,
+            default: null,
+        },
+        // MongoDB TTL index will auto-delete the document when this date is reached.
+        // - Unseen messages: expiresAt = createdAt + 24 hours
+        // - Seen messages:   expiresAt = seenAt + 1 minute
+        expiresAt: {
+            type: Date,
+            required: true,
+        },
     },
     {timestamps : true}
-)
+);
+
+// TTL index — MongoDB checks every ~60 seconds and removes expired docs
+messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 const Message= mongoose.model("Message",messageSchema);
 export default Message;
