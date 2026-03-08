@@ -75,74 +75,6 @@ Before running this application, make sure you have the following installed:
 - MongoDB (local installation or MongoDB Atlas account)
 - npm or yarn package manager
 
-## Environment Variables Setup
-
-You need to create environment variable files for both backend and frontend.
-
-### Backend Environment Variables
-
-Create a `.env` file in the `backend` directory with the following variables:
-
-```env
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# Database
-MONGO_URL=your_mongodb_connection_string
-
-# Authentication
-JWT_SECRET=your_jwt_secret_key
-
-# Client URL (Frontend URL)
-CLIENT_URL=http://localhost:5173
-
-# Email Service (Resend)
-EMAIL_FROM=your_email@yourdomain.com
-EMAIL_FROM_NAME=Your App Name
-RESEND_API_KEY=your_resend_api_key
-
-# Cloudinary (Image Upload)
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-# Arcjet (Rate Limiting)
-ARCJET_KEY=your_arcjet_key
-ARCJET_ENV=development
-```
-
-### Frontend Environment Variables
-
-Create a `.env` file in the `frontend` directory with the following variable:
-
-```env
-VITE_API_URL=http://localhost:3000
-```
-
-### How to Get API Keys
-
-1. **MongoDB**: 
-   - Sign up at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-   - Create a cluster and get your connection string
-
-2. **Cloudinary**:
-   - Sign up at [Cloudinary](https://cloudinary.com/)
-   - Find your credentials in the dashboard
-
-3. **Resend**:
-   - Sign up at [Resend](https://resend.com/)
-   - Generate an API key from your account settings
-   - Verify your sender domain or email
-
-4. **Arcjet**:
-   - Sign up at [Arcjet](https://arcjet.com/)
-   - Create a new site and get your API key
-
-5. **JWT Secret**:
-   - Generate a random string (at least 32 characters)
-   - You can use: `openssl rand -base64 32` in terminal
-
 ## Installation
 
 ### Step 1: Clone the Repository
@@ -173,10 +105,6 @@ cd frontend
 npm install
 cd ..
 ```
-
-### Step 5: Setup Environment Variables
-
-Create the `.env` files as described in the Environment Variables Setup section above.
 
 ## Running the Application
 
@@ -335,42 +263,6 @@ Chat_Application_Project/
 - Unseen messages are automatically deleted after 24 hours
 - Seen messages are deleted 60 seconds after being marked as seen
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Cannot connect to MongoDB**
-   - Check your MongoDB connection string in the `.env` file
-   - Ensure your MongoDB server is running
-   - Check if your IP address is whitelisted in MongoDB Atlas
-
-2. **Images not uploading**
-   - Verify your Cloudinary credentials
-   - Check if the image size is not too large (backend limit is 100mb for JSON)
-
-3. **Emails not sending**
-   - Verify your Resend API key
-   - Check if your sender email is verified in Resend
-   - Look at backend console logs for specific error messages
-
-4. **Socket connection issues**
-   - Ensure CLIENT_URL in backend `.env` matches your frontend URL
-   - Check if the backend server is running
-   - Look for CORS errors in the browser console
-
-5. **Port already in use**
-   - Change the PORT in backend `.env` file
-   - Or stop the process using that port
-
-## Security Considerations
-
-- Never commit `.env` files to version control
-- Use strong passwords and JWT secrets
-- Keep all dependencies up to date
-- The application uses httpOnly cookies to prevent XSS attacks
-- Rate limiting is implemented to prevent abuse
-- Password minimum length is enforced
-- Email validation is performed before registration
 
 ## Contributing
 
@@ -381,17 +273,5 @@ If you want to contribute to this project:
 4. Test thoroughly
 5. Submit a pull request
 
-## License
 
-ISC
 
-## Author
-
-Feel free to reach out for questions or suggestions.
-
-## Acknowledgments
-
-- Built with MERN stack
-- Real-time features powered by Socket.io
-- UI components from DaisyUI
-- Icons from Lucide React
